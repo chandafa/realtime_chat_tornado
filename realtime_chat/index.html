@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Chat</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      #chat {
+        max-height: 400px; /* Tambahkan maksimum tinggi untuk scrollbar */
+        overflow-y: auto; /* Tambahkan overflow-y untuk scrollbar vertikal */
+      }
+      .message {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 20px;
+        margin: 5px 0;
+        display: block;
+        width: fit-content;
+        max-width: 80%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12 text-center">
+          <h1 class="mt-4">Real-Time Chat</h1>
+        </div>
+      </div>
+      <div class="row justify-content-center mt-4">
+        <div class="col-lg-6 col-md-8 col-sm-10 col-12">
+          <div class="card">
+            <div class="card-body" id="chat">
+              <!-- Display stored chat messages -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-10 col-12">
+          <div class="input-group mt-4">
+            <input type="text" class="form-control" id="message" placeholder="Type your message..." />
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="button" onclick="sendMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery (optional) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+      // WebSocket connection and message handling script
+      const chatSocket = new WebSocket("ws://localhost:8888/chatsocket");
+
+      // Load stored messages when page is loaded
+      window.onload = function () {
+        const storedMessages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+        const chatDiv = document.getElementById("chat");
+        storedMessages.forEach((message) => {
+          const messageElement = document.createElement("p");
+          messageElement.className = "badge rounded-pill text-bg-warning text-white px-3 py-2 bg-primary message";
+          messageElement.innerText = message;
+          chatDiv.appendChild(messageElement);
+        });
+        chatDiv.scrollTop = chatDiv.scrollHeight; // Atur scroll ke bawah saat halaman dimuat
+      };
+
+      chatSocket.onmessage = function (event) {
+        const chatDiv = document.getElementById("chat");
+        const messageElement = document.createElement("p");
+        messageElement.className = "badge rounded-pill text-bg-warning text-white px-3 py-2 bg-primary message";
+        messageElement.innerText = event.data;
+        chatDiv.appendChild(messageElement);
+        chatDiv.scrollTop = chatDiv.scrollHeight; // Atur scroll ke bawah setiap kali pesan baru ditambahkan
+
+        // Simpan pesan ke penyimpanan lokal
+        const storedMessages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+        storedMessages.push(event.data);
+        localStorage.setItem("chatMessages", JSON.stringify(storedMessages));
+      };
+
+      function sendMessage() {
+        const messageInput = document.getElementById("message");
+        const message = messageInput.value;
+        chatSocket.send(message);
+        messageInput.value = "";
+      }
+    </script>
+  </body>
+</html>
